@@ -3,9 +3,12 @@ pub mod regs;
 pub mod types;
 pub mod device;
 pub mod bus;
+pub mod init;
+pub mod otp;
 
 pub use device::Vd6283;
 pub use error::{Error, Result};
 pub use types::{
-    AlsData, Channel, Color, DeviceState, FlickerInfo, FlickerOutput, LuxCct, OtpData,
+    AlsData, Channel, Color, DeviceState, 
+    FlickerInfo, FlickerOutput, LuxCct, OtpData,
 };
