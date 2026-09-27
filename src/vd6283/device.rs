@@ -71,3 +71,16 @@ impl<I2C> Vd6283<I2C> {
         &self.uid
     }
 }
+
+impl<I2C> Vd6283<I2C> {
+    /// 检查当前状态是否允许修改配置。
+    pub(crate) fn ensure_configurable(&self) -> super::error::Result<()> {
+        match self.state {
+            DeviceState::Init => Ok(()),
+            DeviceState::Free => Err(super::error::Error::InvalidDeviceId),
+            DeviceState::AlsRunning | DeviceState::FlickerRunning | DeviceState::BothRunning => {
+                Err(super::error::Error::AlreadyStarted)
+            }
+        }
+    }
+}
