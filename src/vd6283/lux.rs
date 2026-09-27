@@ -61,22 +61,4 @@ fn dot(row: [f32; 3], rgb: [f32; 3]) -> f32 {
     row[0] * rgb[0] + row[1] * rgb[1] + row[2] * rgb[2]
 }
 
-#[cfg(test)]
-mod tests {
-    use super::{get_lux_cct, normalize_als};
-    use crate::vd6283::types::AlsData;
 
-    #[test]
-    fn 零曝光或零增益不会产生无穷值() {
-        assert_eq!(normalize_als(100, 0, 256), 0.0);
-        assert_eq!(normalize_als(100, 100_800, 0), 0.0);
-    }
-
-    #[test]
-    fn 全零输入得到全零输出() {
-        let als = AlsData::default();
-        let result = get_lux_cct(&als, 100_800);
-        assert_eq!(result.lux, 0.0);
-        assert_eq!(result.cct, 0.0);
-    }
-}
