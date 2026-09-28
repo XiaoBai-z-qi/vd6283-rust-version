@@ -4,7 +4,22 @@ version = "0.1.0"
 edition = "2021"
 
 [lib]
+test = false
+bench = false
 path = "src/lib.rs"
+
+[[bin]]
+name = "vd6283-rust-version"
+test = false
+bench = false
 
 [dependencies]
 embedded-hal = "1.0"
+cortex-m = "0.7"
+cortex-m-rt = "0.7"
+panic-halt = "1.0"
+rtt-target = "0.6"
+
+[dependencies.stm32f4xx-hal]
+version = "0.23.0"
+features = ["stm32f411"]
