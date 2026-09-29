@@ -9,9 +9,10 @@ bench = false
 path = "src/lib.rs"
 
 [[bin]]
-name = "vd6283-rust-version"
+name = "vd6283"
 test = false
 bench = false
+path = "src/main.rs"
 
 [dependencies]
 embedded-hal = "1.0"
