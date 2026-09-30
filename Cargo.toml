@@ -1,5 +1,5 @@
 [package]
-name = "vd6283-rust-version"
+name = "vd6283"
 version = "0.1.0"
 edition = "2021"
 
@@ -12,14 +12,15 @@ path = "src/lib.rs"
 name = "vd6283"
 test = false
 bench = false
-path = "src/main.rs"
+path = "src/flicker.rs"
 
 [dependencies]
 embedded-hal = "1.0"
 cortex-m = "0.7"
 cortex-m-rt = "0.7"
 panic-halt = "1.0"
-rtt-target = "0.6"
+#rtt-target = "0.6"
+libm = "0.2"
 
 [dependencies.stm32f4xx-hal]
 version = "0.23.0"

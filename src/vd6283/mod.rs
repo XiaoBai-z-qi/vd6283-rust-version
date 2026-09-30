@@ -9,6 +9,7 @@ pub mod control;
 pub mod gain;
 pub mod mode;
 pub mod lux;
+pub mod flicker;
 
 pub use device::Vd6283;
 pub use error::{Error, Result};

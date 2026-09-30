@@ -1,0 +1,5 @@
+// 生成文档
+cargo doc --open
+cargo doc --no-deps --open
+cargo doc --open --document-private-items  
+cargo doc --no-deps --open --document-private-items  

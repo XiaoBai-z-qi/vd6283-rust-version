@@ -7,7 +7,7 @@ use rtt_target::{rprintln, rtt_init_print};
 //use rtt_target::{rprintln, rtt_init_print};
 use stm32f4xx_hal::{i2c::I2c, pac, prelude::*, rcc::Config};
 
-use vd6283_rust_version::vd6283::{get_lux_cct, Channel, Vd6283};
+use vd6283::vd6283::{get_lux_cct, Channel, Vd6283};
 
 const I2C_BUS_HZ: u32 = 100_000;
 const ALS_CHANNELS: u8 = 0x3f;
