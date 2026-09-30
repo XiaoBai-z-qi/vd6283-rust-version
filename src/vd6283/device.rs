@@ -1,5 +1,3 @@
-//! VD6283 设备对象。
-
 use super::types::{DeviceState, FlickerOutput, OtpData, CHANNEL_COUNT, UID_LEN};
 
 pub struct Vd6283<I2C> {
@@ -23,7 +21,6 @@ pub struct Vd6283<I2C> {
 }
 
 impl<I2C> Vd6283<I2C> {
-    /// 用一条 I2C 总线创建尚未初始化的设备对象。
     pub fn new(i2c: I2C) -> Self {
         Self {
             i2c,
@@ -46,34 +43,28 @@ impl<I2C> Vd6283<I2C> {
         }
     }
 
-    /// 取回底层 I2C 总线的所有权。
     pub fn into_inner(self) -> I2C {
         self.i2c
     }
 
-    /// 查看设备当前状态。
     pub const fn state(&self) -> DeviceState {
         self.state
     }
 
-    /// 查看器件 ID。
     pub const fn device_id(&self) -> u8 {
         self.device_id
     }
 
-    /// 查看 revision。
     pub const fn revision_id(&self) -> u8 {
         self.revision_id
     }
 
-    /// 查看生成的 UID 缓冲区。
     pub fn uid(&self) -> &[u8; UID_LEN] {
         &self.uid
     }
 }
 
 impl<I2C> Vd6283<I2C> {
-    /// 检查当前状态是否允许修改配置。
     pub(crate) fn ensure_configurable(&self) -> super::error::Result<()> {
         match self.state {
             DeviceState::Init => Ok(()),

@@ -1,5 +1,3 @@
-//! VD6283 增益、曝光和 OTP 校准。
-
 use super::{
     device::Vd6283,
     error::Result,
@@ -7,26 +5,23 @@ use super::{
     types::{AlsData, Channel, CHANNEL_COUNT},
 };
 
-/// VD6283 支持的增益档位，数值采用 8.8 定点格式。
-const GAIN_RANGE: [u16; 15] = [
+const GAIN_RANGE:           [u16; 15] = [
     0x42ab, 0x3200, 0x2154, 0x1900, 0x10ab, 0x0a00, 0x0723, 0x0500, 0x0354, 0x0280, 0x01ab, 0x0140,
     0x0100, 0x00d4, 0x00b5,
 ];
 
-/// 增益档位切换门限，和 GAIN_RANGE 一一对应少一个末端值。
-const GAIN_THRESHOLDS: [u16; 14] = [
+const GAIN_THRESHOLDS:      [u16; 14] = [
     0x3a56, 0x29ab, 0x1d2b, 0x14d6, 0x0d56, 0x0892, 0x0612, 0x042b, 0x02eb, 0x0216, 0x0176, 0x0121,
     0x00eb, 0x00c5,
 ];
 
-const EXPOSURE_STEP_US: u32 = 1_600;
-const EXPOSURE_MAX_STEPS: u32 = 0x3ff;
+const EXPOSURE_STEP_US:     u32 = 1_600;
+const EXPOSURE_MAX_STEPS:   u32 = 0x3ff;
 
 impl<I2C> Vd6283<I2C>
 where
     I2C: embedded_hal::i2c::I2c,
 {
-    /// 设置一个通道的增益，并返回实际采用的档位值。
     pub fn set_gain(&mut self, channel: Channel, requested: u16) -> Result<u16> {
         self.ensure_configurable()?;
         let index = gain_index(requested);
@@ -35,12 +30,10 @@ where
         Ok(self.gains[channel.index()])
     }
 
-    /// 读取一个通道当前缓存的实际增益。
     pub fn gain(&self, channel: Channel) -> u16 {
         self.gains[channel.index()]
     }
 
-    /// 设置曝光时间，并返回按 1.6 ms 步进取整后的实际值。
     pub fn set_exposure_time(&mut self, requested_us: u32) -> Result<u32> {
         self.ensure_configurable()?;
         let steps = ((u64::from(requested_us) + u64::from(EXPOSURE_STEP_US / 2))
@@ -53,12 +46,10 @@ where
         Ok(self.exposure_us)
     }
 
-    /// 读取当前曝光时间。
     pub const fn exposure_time_us(&self) -> u32 {
         self.exposure_us
     }
 
-    /// 对 ALS 原始计数应用 OTP 校准系数。
     pub(crate) fn apply_calibration(&self, als: &mut AlsData) {
         for channel in 0..CHANNEL_COUNT {
             if self.als_channels & (1 << channel) == 0 {

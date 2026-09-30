@@ -1,5 +1,3 @@
-//! VD6283 上电初始化和关闭流程。
-
 use super::{
     device::Vd6283,
     error::{Error, Result},
@@ -7,18 +5,14 @@ use super::{
     types::{DeviceState, CHANNEL_COUNT},
 };
 
-/// 初始化时默认使用的高频振荡器 trim。
-const DEFAULT_HF_TRIM: u16 = 0x0e3;
-/// 初始化时默认使用的低频振荡器 trim。
-const DEFAULT_LF_TRIM: u8 = 0x07;
-/// 1.0x 增益对应增益表第 13 档，因此 VREF 写入 13。
-const DEFAULT_VREF: u8 = 13;
+const DEFAULT_HF_TRIM:  u16 = 0x0e3;
+const DEFAULT_LF_TRIM:  u8 = 0x07;
+const DEFAULT_VREF:     u8 = 13;
 
 impl<I2C> Vd6283<I2C>
 where
     I2C: embedded_hal::i2c::I2c,
 {
-    /// 执行完整的设备初始化流程。
     pub fn init(&mut self) -> Result<()> {
         if self.state != DeviceState::Free {
             return Err(Error::AlreadyStarted);
@@ -59,7 +53,6 @@ where
         Ok(())
     }
 
-    /// 通过 GLOBAL_RESET 寄存器执行一次软件复位。
     pub(crate) fn software_reset(&mut self) -> Result<()> {
         self.write_reg(regs::REG_GLOBAL_RESET, 1)?;
         self.write_reg(regs::REG_GLOBAL_RESET, 0)
@@ -115,7 +108,6 @@ where
         self.write_reg(regs::REG_DITHERING_CONTROL, 1)
     }
 
-    /// 复位设备并将它置回可重新初始化的状态。
     pub fn terminate(&mut self) -> Result<()> {
         if self.state == DeviceState::Free {
             return Err(Error::InvalidDeviceId);

@@ -1,5 +1,3 @@
-//! VD6283 OTP 读取和 UID 生成。
-
 use super::{
     device::Vd6283,
     error::{Error, Result},
@@ -11,7 +9,6 @@ impl<I2C> Vd6283<I2C>
 where
     I2C: embedded_hal::i2c::I2c,
 {
-    /// 复位 OTP 控制器，并等待两个 OTP bank 都准备好。
     pub(crate) fn otp_reset(&mut self) -> Result<()> {
         self.write_reg(regs::REG_OTP_CONTROL_1, 0)?;
 
@@ -25,7 +22,6 @@ where
         Err(Error::Timeout)
     }
 
-    /// 读取两个 OTP bank，并转换成便于位域读取的两个 u64。
     pub(crate) fn otp_read_init(&mut self) -> Result<()> {
         let mut bank0 = [0u8; 8];
         let mut bank1 = [0u8; 8];
@@ -51,7 +47,6 @@ where
         Ok(())
     }
 
-    /// 从两个 OTP bank 中读取一段最多 24 bit 的数据。
     fn otp_read(&self, bit_start: usize, bit_count: usize, bit_swap: bool) -> Result<u32> {
         if bit_count == 0 || bit_count > 24 || bit_start + bit_count > 120 {
             return Err(Error::InvalidParams);
@@ -77,15 +72,14 @@ where
         Ok(value)
     }
 
-    /// 读取 OTP 参数；无法识别具体 OTP 版本时使用默认值。
     pub(crate) fn otp_read_param(&mut self) -> Result<()> {
         self.otp = OtpData {
-            hf_trim: 0x0e3,
-            lf_trim: 0x07,
-            filter_config: 2,
-            filter_index: 2,
-            gains: [0x80; CHANNEL_COUNT],
-            version: 0x15,
+            hf_trim:        0x0e3,
+            lf_trim:        0x07,
+            filter_config:  2,
+            filter_index:   2,
+            gains:          [0x80; CHANNEL_COUNT],
+            version:        0x15,
         };
 
         let version = self.otp_read(113, 3, true)? + 0x10;
@@ -110,7 +104,6 @@ where
         Ok(())
     }
 
-    /// 按原 C 驱动的 XOR 链编码规则生成 14 字符 UID。
     pub(crate) fn otp_generate_uid(&mut self) -> Result<()> {
         let mut xor_register = 0u8;
         let mut index = 0usize;
@@ -134,14 +127,12 @@ where
     }
 }
 
-/// 将一个字节的 bit 顺序完全翻转。
 fn reverse_bits(mut value: u8) -> u8 {
     value = (value >> 1 & 0x55) | (value << 1 & 0xaa);
     value = (value >> 2 & 0x33) | (value << 2 & 0xcc);
     (value >> 4) | (value << 4)
 }
 
-/// 将四 bit 半字节转换成小写十六进制字符，并更新 XOR 状态。
 fn encode_nibble(nibble: u8, xor_register: &mut u8) -> u8 {
     let previous = *xor_register;
     *xor_register ^= nibble;

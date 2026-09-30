@@ -4,40 +4,31 @@ use super::{
     types::{Channel, FlickerOutput},
 };
 
-pub const FLK_DATA_SIZE: usize = 1024;
+pub const FLK_DATA_SIZE:        usize = 1024;
 pub const FLK_SAMPLING_FREQ_HZ: u32 = 8_000;
-pub const FLK_CHANNEL: Channel = Channel::Ch6;
-const SATURATION_LIMIT: u16 = 2;
-const AUTOGAIN_GAINS: [u16; 16] = [
+pub const FLK_CHANNEL:          Channel = Channel::Ch6;
+const SATURATION_LIMIT:         u16 = 2;
+const AUTOGAIN_GAINS:           [u16; 16] = [
     0x42ab, 0x42ab, 0x3200, 0x2154, 0x1900, 0x10ab, 0x0a00, 0x0723, 0x0500, 0x0354, 0x0280, 0x01ab,
     0x0140, 0x0100, 0x00d4, 0x00b5,
 ];
 
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct FlickerReading {
-    /// 检测到的主频，单位为 Hz。
     pub frequency_hz: u32,
 }
 
 pub struct FlickerAnalyzer {
-    /// 旋转因子 cos 表
-    twiddle_cos:    [f32; FLK_DATA_SIZE / 2],  
-    /// 旋转因子 sin 表
-    twiddle_sin:    [f32; FLK_DATA_SIZE / 2],  
-    /// FFT 实部
-    real:           [f32; FLK_DATA_SIZE],      
-    /// FFT 虚部
-    imag:           [f32; FLK_DATA_SIZE],  
-    /// 幅度谱（结果） 
-    magnitude:      [f32; FLK_DATA_SIZE / 2],  
-    /// 待处理采样缓冲
-    pending:        [i16; FLK_DATA_SIZE],   
-    /// 当前缓冲里的样本数   
-    pending_len:    usize,                     
+    twiddle_cos:    [f32; FLK_DATA_SIZE / 2],
+    twiddle_sin:    [f32; FLK_DATA_SIZE / 2],
+    real:           [f32; FLK_DATA_SIZE],
+    imag:           [f32; FLK_DATA_SIZE],
+    magnitude:      [f32; FLK_DATA_SIZE / 2],
+    pending:        [i16; FLK_DATA_SIZE],
+    pending_len:    usize,
 }
 
 impl FlickerAnalyzer {
-    /// 创建分析器并预计算 FFT 旋转因子。
     pub fn new() -> Self {
         let mut analyzer = Self {
             twiddle_cos:    [0.0; FLK_DATA_SIZE / 2],
@@ -56,7 +47,6 @@ impl FlickerAnalyzer {
         analyzer
     }
 
-    /// 送入一批采样。攒满 [`FLK_DATA_SIZE`] 个时执行一次分析并返回结果。
     pub fn push_samples(&mut self, samples: &[i16]) -> Option<FlickerReading> {
         let mut consumed = 0;
         while self.pending_len < FLK_DATA_SIZE && consumed < samples.len() {
@@ -71,7 +61,6 @@ impl FlickerAnalyzer {
         Some(self.analyze())
     }
 
-    /// 对当前攒满的一组采样执行 FFT 并找出主频。
     fn analyze(&mut self) -> FlickerReading {
         for i in 0..FLK_DATA_SIZE {
             self.real[i] = self.pending[i] as f32;
@@ -89,7 +78,6 @@ impl FlickerAnalyzer {
                 libm::sqrtf(self.real[bin] * self.real[bin] + self.imag[bin] * self.imag[bin]);
         }
 
-        // 跳过直流分量后取幅度最大的 bin，再换算成频率。
         let mut index_max = 1;
         let mut max_value = self.magnitude[1];
         for bin in 2..FLK_DATA_SIZE / 2 {
@@ -103,7 +91,6 @@ impl FlickerAnalyzer {
         }
     }
 
-    /// 基-2 时域抽取原地 FFT，旋转因子满足 w = e^(-2πik/N)。
     fn fft_in_place(real: &mut [f32], imag: &mut [f32], twiddle_cos: &[f32], twiddle_sin: &[f32]) {
         let n = real.len();
         let bits = n.trailing_zeros();
@@ -153,18 +140,12 @@ impl<I2C> Vd6283<I2C>
 where
     I2C: embedded_hal::i2c::I2c,
 {
-    /// 频闪通道自动增益：从增益表中间档出发，按饱和计数二分走查。
-    ///
-    /// 对应原工程 `flicker_autogain`。每档先用 [`FlickerOutput::Analog`]
-    /// 短暂启动频闪，按 1 ms 间隔读取饱和计数直到超过门限或超时，
-    /// 再决定向高增益或低增益走查。
     pub fn flicker_autogain<D>(&mut self, delay: &mut D, timeout_ms: u32) -> Result<u16>
     where
         D: embedded_hal::delay::DelayNs,
     {
-        // 与原工程一致，超时裁剪到 1..=100 ms。
         let timeout_ms = timeout_ms.clamp(1, 100);
-        let mut idx: i32 = 7; // 从增益表中间档开始
+        let mut idx: i32 = 7;
         let mut saturation;
 
         for step in 0..4 {
@@ -182,7 +163,6 @@ where
 
             self.stop_flicker()?;
 
-            // 与原工程相同的步距更新：第 1 次走 1 档，之后步距翻倍。
             if step == 0 {
                 if saturation > SATURATION_LIMIT {
                     idx += 1;

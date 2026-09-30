@@ -1,5 +1,3 @@
-//! VD6283 ALS 和 Flicker 工作模式。
-
 use super::{
     device::Vd6283,
     error::{Error, Result},
@@ -11,17 +9,14 @@ impl<I2C> Vd6283<I2C>
 where
     I2C: embedded_hal::i2c::I2c,
 {
-    /// 启动一次 ALS 单次测量。
     pub fn start_single_shot(&mut self, channels: u8) -> Result<()> {
         self.start_als(channels, Mode::AlsSingleShot)
     }
 
-    /// 启动 ALS 同步连续测量。
     pub fn start_synchronous(&mut self, channels: u8) -> Result<()> {
         self.start_als(channels, Mode::AlsSynchronous)
     }
 
-    /// 停止当前 ALS 测量。
     pub fn stop_als(&mut self) -> Result<()> {
         if !matches!(
             self.state,
@@ -40,7 +35,6 @@ where
         Ok(())
     }
 
-    /// 启动指定通道的 Flicker 测量。
     pub fn start_flicker(&mut self, channel: Channel, output: FlickerOutput) -> Result<()> {
         if !matches!(self.state, DeviceState::Init | DeviceState::AlsRunning) {
             return Err(if self.state == DeviceState::FlickerRunning {
@@ -74,7 +68,6 @@ where
         Ok(())
     }
 
-    /// 停止 Flicker 测量并恢复输出寄存器。
     pub fn stop_flicker(&mut self) -> Result<()> {
         if !matches!(
             self.state,
@@ -93,12 +86,10 @@ where
         Ok(())
     }
 
-    /// 查询 IRQ 状态寄存器，返回数据是否已经准备好。
     pub fn is_data_ready(&mut self) -> Result<bool> {
         Ok(self.read_reg(regs::REG_IRQ_CTRL_STATUS)? & 0x02 == 0)
     }
 
-    /// 读取当前 ALS 数据；数据未准备好时返回 None。
     pub fn read_als(&mut self, requested_channels: u8) -> Result<Option<AlsData>> {
         if !matches!(
             self.state,
